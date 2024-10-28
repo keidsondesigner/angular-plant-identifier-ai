@@ -21,7 +21,7 @@ import { PlantUploaderComponent } from './app/components/plant-uploader.componen
       <app-plant-uploader></app-plant-uploader>
 
       <footer class="text-center mt-12 text-gray-500">
-        <p>Desenvolvido com <i class="fas fa-heart text-red-500"></i> para amantes de plantas</p>
+        <p>Desenvolvido por Keidson Roby <i class="fas fa-heart text-red-500"></i> para amantes de plantas</p>
       </footer>
     </div>
   `
