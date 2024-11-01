@@ -38,6 +38,7 @@ export class PlantService {
       Formate a resposta de maneira clara e estruturada, usando emojis relevantes no início de cada seção.
 
       Retorne as informações em formato { "key": "texto", }com keys: nome, nomeCientifico, características, cuidadosNecessario, beneficiosCuriosidades, problemasSolucoes, metodosPropagacao
+      NÃO retorne esse caracter "*", "**", *, (*), (**)
       
       `;
 
