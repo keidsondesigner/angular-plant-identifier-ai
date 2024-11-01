@@ -90,8 +90,17 @@ export class PlantUploaderComponent {
   get formattedSections(): string[] {
     if (!this.plantInfo) return [];
     try {
-      console.log('JSON recebido:', this.plantInfo); // Adicione este log
-      const jsonContent = JSON.parse(this.plantInfo);
+      console.log('JSON recebido:', this.plantInfo);
+
+      // Remove qualquer texto adicional antes ou depois do JSON
+      const cleanJson = this.plantInfo.trim()
+        .replace(/^[\s\S]*?({[\s\S]*})[\s\S]*$/, '$1')
+        .replace(/```json/g, '')
+        .replace(/```/g, '');
+      
+      console.log('JSON limpo:', cleanJson);
+
+      const jsonContent = JSON.parse(cleanJson);
       return Object.keys(jsonContent).map((key) => {
         const sectionContent = jsonContent[key];
         return `<div class="card-section"><strong>${key}</strong>: ${sectionContent}</div>`;
