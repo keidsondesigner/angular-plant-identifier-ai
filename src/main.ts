@@ -8,7 +8,7 @@ import { PlantUploaderComponent } from './app/components/plant-uploader.componen
   standalone: true,
   imports: [PlantUploaderComponent],
   template: `
-    <div class="min-h-screen py-8">
+    <div class="min-h-screen py-8 flex flex-col	justify-center">
       <header class="text-center mb-12">
         <h1 class="text-5xl font-bold text-green-800 mb-4">
           <i class="fas fa-leaf mr-2"></i>Identificador de Plantas
@@ -21,7 +21,7 @@ import { PlantUploaderComponent } from './app/components/plant-uploader.componen
       <app-plant-uploader></app-plant-uploader>
 
       <footer class="text-center mt-12 text-gray-500">
-        <p>Desenvolvido por Keidson Roby <i class="fas fa-heart text-red-500"></i> para amantes de plantas</p>
+        <p>Desenvolvido em Angular & Gemini AI <i class="fas fa-heart text-red-500"></i> por Keidson Roby</p>
       </footer>
     </div>
   `
