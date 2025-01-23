@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PlantService } from '../services/plant.service';
+import { PlantService, PlantAnalysis } from '../services/plant.service';
 
 @Component({
   selector: 'app-plant-uploader',
@@ -44,11 +44,38 @@ import { PlantService } from '../services/plant.service';
           <div *ngIf="previewUrl" class="w-full h-64 bg-gray-100">
             <img [src]="previewUrl" class="w-full h-full object-contain" alt="Planta enviada">
           </div>
-          <div class="grid gap-4">
-          <div *ngFor="let section of formattedSections" class="bg-white rounded-xl shadow-md p-6 mb-4">
-            <div [innerHTML]="section"></div>
+          
+          <div class="bg-white rounded-xl shadow-md p-6 mt-4">
+            <h2 class="text-2xl font-bold text-green-800 mb-4">{{ plantInfo.nome }}</h2>
+            <p class="text-gray-600 italic mb-6">{{ plantInfo.nomeCientifico }}</p>
+            
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-xl font-semibold text-green-700">Características</h3>
+                <p class="text-gray-700">{{ plantInfo.caracteristicas }}</p>
+              </div>
+              
+              <div>
+                <h3 class="text-xl font-semibold text-green-700">Cuidados Necessários</h3>
+                <p class="text-gray-700">{{ plantInfo.cuidadosNecessarios }}</p>
+              </div>
+              
+              <div>
+                <h3 class="text-xl font-semibold text-green-700">Benefícios e Curiosidades</h3>
+                <p class="text-gray-700">{{ plantInfo.beneficiosCuriosidades }}</p>
+              </div>
+              
+              <div>
+                <h3 class="text-xl font-semibold text-green-700">Problemas e Soluções</h3>
+                <p class="text-gray-700">{{ plantInfo.problemasSolucoes }}</p>
+              </div>
+              
+              <div>
+                <h3 class="text-xl font-semibold text-green-700">Métodos de Propagação</h3>
+                <p class="text-gray-700">{{ plantInfo.metodosPropagacao }}</p>
+              </div>
+            </div>
           </div>
-        </div>
         </div>
       </div>
 
@@ -57,75 +84,36 @@ import { PlantService } from '../services/plant.service';
       </div>
     </div>
   `,
-  styles: [
-    `
-    .plant-info :deep(h2) {
-      @apply text-2xl font-bold text-green-800 mt-6 mb-4;
-    }
-    .plant-info :deep(h3) {
-      @apply text-xl font-semibold text-green-700 mt-4 mb-2;
-    }
-    .plant-info :deep(ul) {
-      @apply space-y-2 my-4;
-    }
-    .plant-info :deep(li) {
-      @apply flex items-start;
-    }
-    .plant-info :deep(li::before) {
-      content: "🌱";
-      @apply mr-2;
-    }
-  `,
-  ],
+  styles: [``],
 })
 export class PlantUploaderComponent {
   isDragging = false;
   isLoading = false;
-  plantInfo: string | null = null;
+  plantInfo: PlantAnalysis | null = null;
   error: string | null = null;
   previewUrl: string | null = null;
 
   constructor(private plantService: PlantService) {}
 
-  get formattedSections(): string[] {
-    if (!this.plantInfo) return [];
-    try {
-      console.log('JSON recebido:', this.plantInfo);
-
-      // Remove qualquer texto adicional antes ou depois do JSON
-      const cleanJson = this.plantInfo.trim()
-        .replace(/^[\s\S]*?({[\s\S]*})[\s\S]*$/, '$1')
-        .replace(/```json/g, '')
-        .replace(/```/g, '');
-      
-      console.log('JSON limpo:', cleanJson);
-
-      const jsonContent = JSON.parse(cleanJson);
-      return Object.keys(jsonContent).map((key) => {
-        const sectionContent = jsonContent[key];
-        return `<div class="card-section"><strong>${key}</strong>: ${sectionContent}</div>`;
-      });
-    } catch (e) {
-      console.error('Error parsing JSON:', e);
-      return [];
-    }
-  }
-
   onDragOver(event: DragEvent) {
     event.preventDefault();
+    event.stopPropagation();
     this.isDragging = true;
   }
 
   onDragLeave(event: DragEvent) {
     event.preventDefault();
+    event.stopPropagation();
     this.isDragging = false;
   }
 
   onDrop(event: DragEvent) {
     event.preventDefault();
+    event.stopPropagation();
     this.isDragging = false;
+
     const files = event.dataTransfer?.files;
-    if (files) {
+    if (files?.length) {
       this.handleFile(files[0]);
     }
   }
@@ -140,12 +128,15 @@ export class PlantUploaderComponent {
   private clearPreviousResults() {
     this.plantInfo = null;
     this.error = null;
-    this.previewUrl = null;
+    if (this.previewUrl) {
+      URL.revokeObjectURL(this.previewUrl);
+      this.previewUrl = null;
+    }
   }
 
-  private handleFile(file: File) {
+  private async handleFile(file: File) {
     if (!file.type.startsWith('image/')) {
-      this.error = 'Por favor, envie apenas arquivos de imagem.';
+      this.error = 'Por favor, selecione apenas arquivos de imagem.';
       return;
     }
 

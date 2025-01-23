@@ -1,69 +1,76 @@
 import { Injectable } from '@angular/core';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ANALYSIS_PROMPT } from './analysis-prompt';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { ANALYSIS_PROMPT_ERROR_MESSAGES } from './analysis-prompt-error-msg';
+
+export interface PlantAnalysis {
+  nome: string;
+  nomeCientifico: string;
+  caracteristicas: string;
+  cuidadosNecessarios: string;
+  beneficiosCuriosidades: string;
+  problemasSolucoes: string;
+  metodosPropagacao: string;
+}
+
+interface ApiError {
+  message: string;
+  statusCode?: number;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class PlantService {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  // backend Nest
+  private apiUrl = 'http://localhost:3000/plant';
 
-  constructor() {
-    this.genAI = new GoogleGenerativeAI(
-      'AIzaSyC6a46sCUIIT7u0PUbyvcnGGjZLlmoOofs'
-    );
-    this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-    });
-  }
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  private errorSubject = new BehaviorSubject<string>('');
 
-  async identifyPlant(imageData: string): Promise<string> {
+  loading$ = this.loadingSubject.asObservable();
+  error$ = this.errorSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
+
+  async identifyPlant(imageData: string): Promise<PlantAnalysis> {
     try {
-      const prompt = ANALYSIS_PROMPT;
+      this.loadingSubject.next(true);
+      this.errorSubject.next('');
 
-      // Fetch image as array buffer and convert to Base64
-      const imageBytes = await fetch(imageData).then((res) =>
-        res.arrayBuffer()
-      );
-      const base64Image = btoa(
-        new Uint8Array(imageBytes).reduce(
-          (data, byte) => data + String.fromCharCode(byte),
-          ''
-        )
-      );
+      // Backend Python com proxy.conf.json
+      // const response = await this.http
+      //   .post<PlantAnalysis>('/plant/identify', { imageData })
+      //   .toPromise();
 
-      console.log('Imagem em Base64:', base64Image); // Log para verificar o Base64
+      const response = await this.http
+        .post<PlantAnalysis>(`${this.apiUrl}/identify`, { imageData })
+        .toPromise();
 
-      const imagePart = {
-        inlineData: {
-          data: base64Image,
-          mimeType: 'image/jpeg',
-        },
-      };
 
-      // Envio para API
-      const result = await this.model.generateContent([prompt, imagePart]);
-      console.log('Resposta da API:', result); // Log para verificar a resposta da API
-
-      const response = await result.response;
-      const text = await response.text();
-
-      if (!text || text.trim() === '') {
-        throw new Error(
-          ANALYSIS_PROMPT_ERROR_MESSAGES.PROCESSING_ERROR
-        );
+      if (!response) {
+        throw new Error(ANALYSIS_PROMPT_ERROR_MESSAGES.PROCESSING_ERROR);
       }
 
-      console.log('Texto da resposta:', text); // Log para verificar o texto da resposta
-
-      return text;
-    } catch (error) {
+      return response;
+    } catch (error: unknown) {
       console.error('Erro ao identificar planta:', error);
-      throw new Error(
-        ANALYSIS_PROMPT_ERROR_MESSAGES.IMAGE_PROCESSING_ERROR
-      );
+
+      let errorMessage = ANALYSIS_PROMPT_ERROR_MESSAGES.IMAGE_PROCESSING_ERROR;
+
+      if (error instanceof HttpErrorResponse) {
+        // Erro de resposta HTTP
+        const apiError = error.error as ApiError;
+        errorMessage = apiError.message || errorMessage;
+      } else if (error instanceof Error) {
+        // Erro JavaScript padrão
+        errorMessage = error.message;
+      }
+      
+      this.errorSubject.next(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      this.loadingSubject.next(false);
     }
   }
 }
