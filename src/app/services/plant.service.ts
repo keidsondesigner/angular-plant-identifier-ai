@@ -23,7 +23,7 @@ interface ApiError {
 })
 export class PlantService {
   // backend Nest
-  private apiUrl = 'http://localhost:3000/plant';
+  private apiUrl = 'https://api-keidsonroby-ai.onrender.com';
 
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new BehaviorSubject<string>('');
@@ -44,7 +44,7 @@ export class PlantService {
       //   .toPromise();
 
       const response = await this.http
-        .post<PlantAnalysis>(`${this.apiUrl}/identify`, { imageData })
+        .post<PlantAnalysis>(`${this.apiUrl}/plant/identify`, { imageData })
         .toPromise();
 
 
